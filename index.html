@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Special Message</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #ffdde1;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Screen 1: Initial Intro */
+    .fade-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: #ffafbd;
+      color: white;
+      transition: opacity 1.2s ease;
+      z-index: 100;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .fade-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* The White Surprise Popup (Large) */
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: white;
+      padding: 30px 50px; 
+      border-radius: 30px;
+      text-align: center;
+      width: 85%;
+      max-width: 420px;
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 50; 
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    }
+
+    .popup.show {
+      opacity: 1;
+      display: block;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .popup h2 {
+      margin: 0;
+      color: #d6336c;
+      font-size: 2.2rem;
+    }
+
+    /* Main Content Container */
+    .valentine {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .main-img {
+      width: 90%;
+      max-width: 450px;
+      border-radius: 30px;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .main-img.faded {
+      opacity: 0.15;
+      transform: scale(0.95);
+    }
+
+    /* Buttons */
+    .btns {
+      display: flex;
+      gap: 30px;
+      z-index: 11;
+    }
+
+    .btns button {
+      padding: 20px 50px;
+      font-size: 1.5rem;
+      border: none;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: transform 0.2s, left 0.3s, top 0.3s;
+      font-weight: bold;
+    }
+
+    .yes { 
+      background: #ff4d6d; 
+      color: white; 
+      box-shadow: 0 8px 20px rgba(255, 77, 109, 0.4);
+    }
+    .yes:hover { transform: scale(1.15); background: #d6336c; }
+
+    .no { background: #fff; color: #888; box-shadow: 0 5px 15px rgba(0,0,0,0.1); position: relative; }
+
+    /* Pop-up Message Card (for NO) */
+    .fun-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      background: white;
+      padding: 30px 40px;
+      border-radius: 25px;
+      font-size: 2rem;
+      color: #d6336c;
+      font-weight: bold;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 200;
+      pointer-events: none;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .fun-popup.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-10px); }
+      100% { transform: translateX(0); }
+    }
+    .shake { animation: shake 0.3s ease-in-out; }
+  </style>
+</head>
+<body>
+
+  <audio id="yaySound" src="yay.mp3" preload="auto"></audio>
+
+  <div class="fade-screen" id="screen1">
+    <h1 style="font-size: 4.5rem; margin-bottom: 0;">Hi :)</h1>
+    <p style="font-size: 2rem; max-width: 500px;">I have something to show you...</p>
+    <p style="font-size: 1.2rem; opacity: 0.7; margin-top: 40px;">(Tap to open)</p>
+  </div>
+
+  <div class="popup" id="popup">
+    <h2>I have something to ask you...</h2>
+  </div>
+
+  <div class="valentine" id="valentine">
+    <img src="noosh.jpeg" class="main-img" id="mainImg" alt="The Question">
+    <div class="btns">
+      <button class="yes">Yes</button>
+      <button class="no" id="noBtn">No</button>
+    </div>
+  </div>
+
+  <div class="fun-popup" id="funPopup">Wait, really?</div>
+
+<script>
+  const screen1 = document.getElementById("screen1");
+  const popup = document.getElementById("popup");
+  const valentine = document.getElementById("valentine");
+  const noBtn = document.getElementById("noBtn");
+  const yesBtn = document.querySelector(".yes");
+  const funPopup = document.getElementById("funPopup");
+  const mainImg = document.getElementById("mainImg");
+  const yaySound = document.getElementById("yaySound");
+
+  let lastMessage = "";
+
+  // Start sequence and pre-load audio
+  screen1.addEventListener("click", () => {
+    // "Wake up" the audio for the browser
+    yaySound.play().then(() => {
+        yaySound.pause();
+        yaySound.currentTime = 0;
+    }).catch(() => {/* Ignore errors here */});
+
+    screen1.classList.add("hidden");
+    setTimeout(() => {
+      popup.style.display = "block";
+      setTimeout(() => popup.classList.add("show"), 10);
+    }, 500);
+
+    setTimeout(() => {
+      popup.classList.remove("show");
+      setTimeout(() => {
+        popup.style.display = "none";
+        valentine.style.display = "flex";
+        setTimeout(() => valentine.style.opacity = "1", 50);
+      }, 600);
+    }, 3500);
+  });
+
+  const messages = ["Wait, really?", "Are you sure??", "Think again! 🥺", "Wrong button! 😂", "PLS NO 💔"];
+
+  noBtn.addEventListener("click", () => {
+    mainImg.classList.add("faded");
+    
+    let randomMsg;
+    do {
+      randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    } while (randomMsg === lastMessage);
+    lastMessage = randomMsg;
+
+    funPopup.textContent = randomMsg;
+    funPopup.classList.add("show");
+    noBtn.classList.add("shake");
+    setTimeout(() => noBtn.classList.remove("shake"), 300);
+
+    const rect = mainImg.getBoundingClientRect();
+    let x, y, safe = false;
+    while (!safe) {
+      x = Math.random() * (window.innerWidth - 150);
+      y = Math.random() * (window.innerHeight - 80);
+      const buffer = 40;
+      if (x < rect.left - buffer || x > rect.right + buffer || y < rect.top - buffer || y > rect.bottom + buffer) {
+        safe = true;
+      }
+    }
+    noBtn.style.position = "fixed";
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+
+    setTimeout(() => {
+      funPopup.classList.remove("show");
+      mainImg.classList.remove("faded");
+    }, 1500);
+  });
+
+  yesBtn.addEventListener("click", () => {
+    // Play sound immediately
+    yaySound.play().catch(e => console.error("Sound failed:", e));
+
+    // Fire Confetti
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#ff4d6d', '#d6336c', '#ffafbd', '#ffffff']
+    });
+
+    // Short delay before screen swap to ensure audio/confetti start smoothly
+    setTimeout(() => {
+        document.body.innerHTML = `
+          <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#ffdde1; text-align:center;">
+            <h1 style="font-size:5rem; color:#d6336c; margin:0;">❤️ YAY! ❤️</h1>
+            <p style="font-size:2.5rem; color:#ff4d6d; margin-top:10px;">Best decision ever!</p>
+          </div>
+        `;
+    }, 100);
+  });
+</script>
+
+</body>
+</html>
